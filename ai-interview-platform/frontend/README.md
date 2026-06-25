@@ -1,16 +1,51 @@
-# React + Vite
+# AI Interview Platform 🚀
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A full-stack web application designed to help users practice, track, and improve their interview skills. 
 
-Currently, two official plugins are available:
+## 🛠️ Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Frontend:**
+* React (via Vite)
+* React Router DOM (Navigation)
+* HTML5 / CSS3 / JavaScript
 
-## React Compiler
+**Backend (In Progress):**
+* Node.js
+* Express.js
+* MongoDB
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📂 Project Structure
 
-## Expanding the Oxlint configuration
+This project uses a standard full-stack architecture, separating the client and server code into distinct directories:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- `/frontend` - Contains the React application and user interface.
+- `/backend` - Contains the Node.js/Express server and database API.
+
+## 🚀 Current Progress
+
+* **Frontend Initialization:** Scaffolded a fast, modern React app using Vite.
+* **Routing:** Implemented multi-page navigation using `react-router-dom` with the following distinct routes:
+  * `/` - Login Page
+  * `/register` - Account Registration Page
+  * `/dashboard` - Protected User Dashboard
+* **Version Control:** Repository initialized, cleaned, and synced with GitHub.
+
+## 💻 How to Run Locally
+
+To view the frontend of this project on your local machine, follow these steps:
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/your-username/ai-interview-platform.git](https://github.com/your-username/ai-interview-platform.git)
+
+
+
+*(Note: Don't forget to swap out `your-username` in the "How to Run Locally" section with your actual GitHub username!)*
+
+### **Step 3: Push Your README to GitHub**
+Once you have saved the file in VS Code, open your terminal (still in the main `ai-interview-platform` folder) and run these commands to update your repository:
+
+```bash
+git add README.md
+git commit -m "Add project README"
+git push
