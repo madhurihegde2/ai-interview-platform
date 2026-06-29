@@ -1,8 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import InputField from "../components/InputField";
 
+
 function Login() {
+    const navigate = useNavigate();
+
+
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center">
       <Card>
@@ -27,7 +32,10 @@ function Login() {
         />
 
         <div className="mt-6">
-          <Button text="Login" />
+          <Button text="Login" 
+          onClick={() => navigate("/dashboard")}
+          />
+          
         </div>
 
         <p className="text-center mt-5">
