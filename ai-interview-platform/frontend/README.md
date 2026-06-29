@@ -1,51 +1,156 @@
-# AI Interview Platform 🚀
+# AI Interview Preparation Platform
 
-A full-stack web application designed to help users practice, track, and improve their interview skills. 
+## 📌 Overview
+
+AI Interview Preparation Platform is a full-stack web application that helps users prepare for technical interviews using AI-powered interview question generation, resume analysis, and mock interview sessions.
+
+This project is being built as part of my preparation for my MS in Computer Science at Northeastern University and to strengthen my full-stack software engineering skills.
+
+---
+
+## 🚀 Features (Planned)
+
+### User Authentication
+
+* User Registration
+* User Login
+* JWT Authentication
+* Password Encryption
+
+### Dashboard
+
+* Personalized Dashboard
+* Interview History
+* Resume Status
+
+### Resume Management
+
+* Upload Resume (PDF)
+* Resume Parsing
+* Resume Storage
+
+### AI Features
+
+* AI-generated Interview Questions
+* Mock Interview Chatbot
+* Personalized Feedback
+
+### Analytics
+
+* Practice Statistics
+* Interview Performance
+* Progress Tracking
+
+---
 
 ## 🛠️ Tech Stack
 
-**Frontend:**
-* React (via Vite)
-* React Router DOM (Navigation)
-* HTML5 / CSS3 / JavaScript
+### Frontend
 
-**Backend (In Progress):**
+* React
+* Vite
+* Tailwind CSS
+* React Router
+
+### Backend *(Upcoming)*
+
 * Node.js
 * Express.js
-* MongoDB
 
-## 📂 Project Structure
+### Database *(Planned)*
 
-This project uses a standard full-stack architecture, separating the client and server code into distinct directories:
+* PostgreSQL
+* Prisma ORM
 
-- `/frontend` - Contains the React application and user interface.
-- `/backend` - Contains the Node.js/Express server and database API.
+### Authentication *(Planned)*
 
-## 🚀 Current Progress
+* JWT
+* bcrypt
 
-* **Frontend Initialization:** Scaffolded a fast, modern React app using Vite.
-* **Routing:** Implemented multi-page navigation using `react-router-dom` with the following distinct routes:
-  * `/` - Login Page
-  * `/register` - Account Registration Page
-  * `/dashboard` - Protected User Dashboard
-* **Version Control:** Repository initialized, cleaned, and synced with GitHub.
+### AI *(Planned)*
 
-## 💻 How to Run Locally
+* Google Gemini API (or OpenAI API)
 
-To view the frontend of this project on your local machine, follow these steps:
+### Deployment *(Planned)*
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/your-username/ai-interview-platform.git](https://github.com/your-username/ai-interview-platform.git)
+* Vercel (Frontend)
+* Render (Backend)
+* Neon PostgreSQL
+
+---
+
+## 📂 Current Project Structure
+
+```text
+ai-interview-platform/
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── assets/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── package.json
+│
+└── backend/ (Coming Soon)
+```
+
+---
+
+## ✅ Features Completed
+
+* React + Vite Setup
+* Tailwind CSS Integration
+* React Router Configuration
+* Reusable Components
+* Login Page
+* Registration Page
+* Dashboard UI
+* Navigation between pages
+* GitHub Version Control
+
+---
+
+## 📅 Development Roadmap
+
+* [x] React Project Setup
+* [x] Tailwind CSS
+* [x] React Router
+* [x] Login Page
+* [x] Register Page
+* [x] Dashboard UI
+* [ ] Backend with Express.js
+* [ ] PostgreSQL Integration
+* [ ] JWT Authentication
+* [ ] Resume Upload
+* [ ] AI Interview Question Generator
+* [ ] Mock Interview System
+* [ ] Deployment
+
+---
+
+## 🎯 Learning Objectives
+
+This project is helping me strengthen my knowledge of:
+
+* React
+* JavaScript (ES6+)
+* Component-based Architecture
+* REST APIs
+* Backend Development
+* Database Design
+* Authentication
+* AI Integration
+* Software Engineering Best Practices
+
+---
+
+## 👩‍💻 Author
+
+**Madhuri Hegde**
 
 
 
-*(Note: Don't forget to swap out `your-username` in the "How to Run Locally" section with your actual GitHub username!)*
-
-### **Step 3: Push Your README to GitHub**
-Once you have saved the file in VS Code, open your terminal (still in the main `ai-interview-platform` folder) and run these commands to update your repository:
-
-```bash
-git add README.md
-git commit -m "Add project README"
-git push
+GitHub: *(Add your GitHub profile link here)*
