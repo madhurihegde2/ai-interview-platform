@@ -153,4 +153,4 @@ This project is helping me strengthen my knowledge of:
 
 
 
-GitHub: *(Add your GitHub profile link here)*
+GitHub: https://github.com/madhurihegde2/ai-interview-platform
