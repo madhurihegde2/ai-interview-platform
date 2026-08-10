@@ -1,12 +1,22 @@
 const express = require("express");
 
-const { getProfile } = require("../controllers/userController");
 const {
   authenticateUser,
 } = require("../middleware/authMiddleware");
 
+const upload = require("../middleware/uploadMiddleware");
+
+const {
+  uploadResume,
+} = require("../controllers/resumeController");
+
 const router = express.Router();
 
-router.get("/profile", authenticateUser, getProfile);
+router.post(
+  "/upload",
+  authenticateUser,
+  upload.single("resume"),
+  uploadResume
+);
 
 module.exports = router;
