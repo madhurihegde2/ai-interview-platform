@@ -23,8 +23,32 @@ model Resume {
   storedName   String
   filePath     String
   fileSize     Int
+  resumeText   String?  @db.Text
   uploadedAt   DateTime @default(now())
 
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  interviewSessions InterviewSession[]
+}
+
+model InterviewSession {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  resumeId Int
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  questions InterviewQuestion[]
+}
+
+model InterviewQuestion {
+  id         Int      @id @default(autoincrement())
+  question   String   @db.Text
+  category   String
+  difficulty String?
+  createdAt  DateTime @default(now())
+
+  sessionId Int
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }

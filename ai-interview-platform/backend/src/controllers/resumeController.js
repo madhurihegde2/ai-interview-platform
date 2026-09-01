@@ -1,4 +1,7 @@
 const prisma = require("../config/prisma");
+const {
+  extractTextFromPDF,
+} = require("../services/pdfService");
 
 const uploadResume = async (req, res) => {
   try {
@@ -18,9 +21,25 @@ const uploadResume = async (req, res) => {
       },
     });
 
+
+    const extractedText = await extractTextFromPDF(req.file.path);
+
+    const updatedResume = await prisma.resume.update({
+    where: {
+        id: resume.id,
+        },
+    data: {
+        resumeText: extractedText,
+        },
+    });
+
+    console.log("========== RESUME TEXT ==========");
+    console.log(extractedText);
+    console.log("================================");
+
     return res.status(201).json({
-      message: "Resume uploaded successfully.",
-      resume,
+        message: "Resume uploaded and processed successfully.",
+        resume: updatedResume,
     });
   } catch (error) {
     console.error("RESUME UPLOAD ERROR:", error);
@@ -30,6 +49,10 @@ const uploadResume = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 module.exports = {
   uploadResume,
