@@ -8,6 +8,7 @@ const upload = require("../middleware/uploadMiddleware");
 
 const {
   uploadResume,
+  getLatestResume,
 } = require("../controllers/resumeController");
 
 const router = express.Router();
@@ -18,5 +19,7 @@ router.post(
   upload.single("resume"),
   uploadResume
 );
+
+router.get("/latest", authenticateUser, getLatestResume);
 
 module.exports = router;
