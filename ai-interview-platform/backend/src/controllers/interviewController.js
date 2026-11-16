@@ -121,6 +121,12 @@ const getInterviewById = async (req, res) => {
     const userId = req.user.userId;
     const interviewId = Number(req.params.id);
 
+    if (!Number.isInteger(interviewId) || interviewId <= 0) {
+      return res.status(400).json({
+        message: "Invalid interview id.",
+      });
+    }
+
     const session = await prisma.interviewSession.findFirst({
       where: {
         id: interviewId,
