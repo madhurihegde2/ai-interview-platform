@@ -7,7 +7,8 @@ import AIQuestionCard from "../components/AIQuestionCard";
 import MockInterviewCard from "../components/MockInterviewCard";
 import InterviewHistoryCard from "../components/InterviewHistoryCard";
 
-import { uploadResume } from "../api/resumeApi";
+import { uploadResume, getLatestResume } from "../api/resumeApi";
+import { clearSession } from "../api/client";
 import {
   createInterview,
   getInterviewHistory,
@@ -32,8 +33,7 @@ function Dashboard() {
   const [history, setHistory] = useState([]);
 
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
 
     navigate("/");
   }
@@ -117,7 +117,22 @@ function Dashboard() {
     }
   }
 
+  async function loadLatestResume() {
+    try {
+      const response = await getLatestResume();
+      const resume = response.data.resume;
+
+      if (resume) {
+        setResumeId(resume.id);
+        setUploadedFileName(resume.originalName);
+      }
+    } catch (error) {
+      console.error("LOAD RESUME ERROR:", error);
+    }
+  }
+
   useEffect(() => {
+    loadLatestResume();
     loadInterviewHistory();
   }, []);
 

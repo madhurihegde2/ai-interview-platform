@@ -4,19 +4,12 @@ const {
   authenticateUser,
 } = require("../middleware/authMiddleware");
 
-const upload = require("../middleware/uploadMiddleware");
-
 const {
-  uploadResume,
-} = require("../controllers/resumeController");
+  getProfile,
+} = require("../controllers/userController");
 
 const router = express.Router();
 
-router.post(
-  "/upload",
-  authenticateUser,
-  upload.single("resume"),
-  uploadResume
-);
+router.get("/profile", authenticateUser, getProfile);
 
 module.exports = router;

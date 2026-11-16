@@ -1,9 +1,15 @@
 const multer = require("multer");
+const fs = require("fs");
 const path = require("path");
+
+const UPLOAD_DIR = path.resolve(__dirname, "../../uploads");
+
+// uploads/ is gitignored, so make sure it exists before multer writes to it
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, UPLOAD_DIR);
   },
 
   filename: (req, file, cb) => {
@@ -21,7 +27,9 @@ const fileFilter = (req, file, cb) => {
   if (file.mimetype === "application/pdf") {
     cb(null, true);
   } else {
-    cb(new Error("Only PDF files are allowed."));
+    const error = new Error("Only PDF files are allowed.");
+    error.status = 400;
+    cb(error);
   }
 };
 
