@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import Card from "../components/Card";
 import Button from "../components/Button";
@@ -14,7 +14,13 @@ function Login() {
     password: "",
   });
 
-  const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
+
+  const [error, setError] = useState(
+    searchParams.get("expired")
+      ? "Your session has expired. Please log in again."
+      : ""
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   function handleChange(event) {
