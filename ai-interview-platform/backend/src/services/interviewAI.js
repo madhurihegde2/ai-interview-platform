@@ -1,9 +1,22 @@
 const { chatJSON } = require("./llmService");
+const {
+  INTERVIEW_MODES,
+  DIFFICULTY_LEVELS,
+} = require("../config/interviewModes");
 
 const MAX_RESUME_CHARS = 12_000;
 const MAX_JD_CHARS = 8_000;
 
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+// Shared description of the interview track for every prompt
+function describeTrack(mode, difficulty) {
+  const track = INTERVIEW_MODES[mode];
+  const level = DIFFICULTY_LEVELS[difficulty];
+
+  return `Interview track: ${track.label}
+Focus areas:
+${track.focusAreas.map((area) => `- ${area}`).join("\n")}
+Difficulty: ${level.label}. ${level.guidance}`;
+}
 
 function clip(text, max) {
   return text.length > max ? `${text.slice(0, max)}\n[truncated]` : text;
@@ -28,6 +41,8 @@ async function generateInterviewQuestions({
   resumeText,
   jobTitle,
   jobDescription,
+  mode,
+  difficulty,
   count,
 }) {
   const result = await chatJSON({
@@ -40,17 +55,19 @@ async function generateInterviewQuestions({
 
 Job title: ${jobTitle}
 
+${describeTrack(mode, difficulty)}
+
 Job description:
-${clip(jobDescription, MAX_JD_CHARS)}
+${jobDescription ? clip(jobDescription, MAX_JD_CHARS) : "(none provided; use the interview track's focus areas)"}
 
 Candidate resume:
 ${clip(resumeText, MAX_RESUME_CHARS)}
 
 Requirements:
-- Mix technical, project-deep-dive, and behavioral questions.
+- Cover the focus areas of the interview track, weighted toward what the job description emphasizes.
+- Mostly technical questions for this track, plus at most one project deep-dive and one behavioral question.
 - Reference specific projects, tools, or experience from the resume where relevant.
-- Target the skills the job description emphasizes.
-- Order from easier warm-up questions to harder ones.
+- Every question must match the requested difficulty level.
 
 Return JSON in this shape:
 {"questions": [{"question": "...", "category": "Technical | Projects | Behavioral | System Design | ...", "difficulty": "Easy | Medium | Hard"}]}`,
@@ -64,7 +81,8 @@ Return JSON in this shape:
     .map((q) => ({
       question: q.question.trim(),
       category: String(q.category || "General").trim(),
-      difficulty: DIFFICULTIES.includes(q.difficulty) ? q.difficulty : "Medium",
+      // the session's difficulty is authoritative
+      difficulty: DIFFICULTY_LEVELS[difficulty].label,
     }));
 
   if (cleaned.length === 0) {
@@ -78,7 +96,14 @@ Return JSON in this shape:
  * Decide whether the answer deserves a follow-up, grounded in retrieved
  * resume/job-description context. Returns the follow-up text or null.
  */
-async function generateFollowUp({ jobTitle, question, answer, context }) {
+async function generateFollowUp({
+  jobTitle,
+  mode,
+  difficulty,
+  question,
+  answer,
+  context,
+}) {
   const result = await chatJSON({
     temperature: 0.6,
     system:
@@ -86,6 +111,8 @@ async function generateFollowUp({ jobTitle, question, answer, context }) {
       "You ask one sharp, tailored follow-up when an answer is vague, " +
       "incomplete, or opens an interesting thread worth probing. Respond only with JSON.",
     user: `Role: ${jobTitle}
+
+${describeTrack(mode, difficulty)}
 
 Relevant context retrieved from the candidate's resume and the job description:
 ${context || "(no context retrieved)"}
@@ -117,7 +144,14 @@ Return JSON: {"needsFollowUp": true|false, "followUp": "..." or null, "category"
 /**
  * Score an answer from 1 to 10 with feedback, grounded in retrieved context.
  */
-async function evaluateAnswer({ jobTitle, question, answer, context }) {
+async function evaluateAnswer({
+  jobTitle,
+  mode,
+  difficulty,
+  question,
+  answer,
+  context,
+}) {
   const result = await chatJSON({
     temperature: 0.2,
     system:
@@ -125,6 +159,11 @@ async function evaluateAnswer({ jobTitle, question, answer, context }) {
       "what a strong candidate for the role would say, and give actionable " +
       "feedback. Respond only with JSON.",
     user: `Role: ${jobTitle}
+
+${describeTrack(mode, difficulty)}
+
+Calibrate the score to the difficulty level: judge the answer against what a
+strong candidate at that level would say.
 
 Relevant context from the candidate's resume and the job description:
 ${context || "(no context retrieved)"}

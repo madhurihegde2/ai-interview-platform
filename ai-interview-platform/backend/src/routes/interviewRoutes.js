@@ -5,6 +5,7 @@ const {
 } = require("../middleware/authMiddleware");
 
 const {
+  getOptions,
   createInterviewSession,
   getInterviewHistory,
   getInterviewById,
@@ -16,6 +17,8 @@ const router = express.Router();
 
 router.use(authenticateUser);
 
+// must come before "/:id"
+router.get("/options", getOptions);
 router.post("/", createInterviewSession);
 router.get("/", getInterviewHistory);
 router.get("/:id", getInterviewById);

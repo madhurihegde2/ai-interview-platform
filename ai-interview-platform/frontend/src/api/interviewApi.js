@@ -1,7 +1,23 @@
 import API from "./client";
 
-export const createInterview = ({ resumeId, jobTitle, jobDescription }) => {
-  return API.post("/interviews", { resumeId, jobTitle, jobDescription });
+export const getInterviewOptions = () => {
+  return API.get("/interviews/options");
+};
+
+export const createInterview = ({
+  resumeId,
+  mode,
+  difficulty,
+  jobTitle,
+  jobDescription,
+}) => {
+  return API.post("/interviews", {
+    resumeId,
+    mode,
+    difficulty,
+    jobTitle,
+    jobDescription,
+  });
 };
 
 export const getInterviewHistory = () => {

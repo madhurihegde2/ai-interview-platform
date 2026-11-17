@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "InterviewSession" ADD COLUMN     "difficulty" TEXT NOT NULL DEFAULT 'MEDIUM',
+ADD COLUMN     "mode" TEXT NOT NULL DEFAULT 'SOFTWARE_ENGINEER';

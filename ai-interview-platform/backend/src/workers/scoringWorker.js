@@ -45,6 +45,8 @@ async function scoreAnswer(answerId) {
 
     const evaluation = await evaluateAnswer({
       jobTitle: session.jobTitle || "the target role",
+      mode: session.mode,
+      difficulty: session.difficulty,
       question: question.question,
       answer: answer.text,
       context: formatChunks(chunks),
@@ -80,9 +82,12 @@ async function scoreAnswer(answerId) {
 async function start() {
   await ensureTopics();
   await consumer.connect();
+  // With no committed offset yet, start from the earliest message so answers
+  // published before this worker joined are not skipped. Scoring is
+  // idempotent (already-scored answers are ignored), so replays are safe.
   await consumer.subscribe({
     topic: TOPICS.ANSWER_SUBMITTED,
-    fromBeginning: false,
+    fromBeginning: true,
   });
 
   await consumer.run({
