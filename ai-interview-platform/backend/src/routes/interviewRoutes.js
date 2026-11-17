@@ -8,14 +8,18 @@ const {
   createInterviewSession,
   getInterviewHistory,
   getInterviewById,
+  submitAnswer,
+  completeInterview,
 } = require("../controllers/interviewController");
 
 const router = express.Router();
 
-router.post("/", authenticateUser, createInterviewSession);
+router.use(authenticateUser);
 
-router.get("/", authenticateUser, getInterviewHistory);
-
-router.get("/:id", authenticateUser, getInterviewById);
+router.post("/", createInterviewSession);
+router.get("/", getInterviewHistory);
+router.get("/:id", getInterviewById);
+router.post("/:id/questions/:questionId/answer", submitAnswer);
+router.post("/:id/complete", completeInterview);
 
 module.exports = router;

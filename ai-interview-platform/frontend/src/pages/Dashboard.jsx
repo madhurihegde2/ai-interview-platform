@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import ResumeCard from "../components/ResumeCard";
-import AIQuestionCard from "../components/AIQuestionCard";
-import MockInterviewCard from "../components/MockInterviewCard";
+import StartInterviewCard from "../components/StartInterviewCard";
 import InterviewHistoryCard from "../components/InterviewHistoryCard";
 
 import { uploadResume, getLatestResume } from "../api/resumeApi";
@@ -27,8 +26,10 @@ function Dashboard() {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [resumeId, setResumeId] = useState(null);
 
-  const [questions, setQuestions] = useState([]);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [jobTitle, setJobTitle] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState("");
 
   const [history, setHistory] = useState([]);
 
@@ -79,31 +80,31 @@ function Dashboard() {
     }
   }
 
-  async function handleGenerateInterview() {
+  async function handleStartInterview() {
     if (!resumeId) {
-      alert("Please upload a resume first.");
+      setStartError("Please upload a resume first.");
       return;
     }
 
     try {
-      setIsGenerating(true);
+      setIsStarting(true);
+      setStartError("");
 
-      const response = await createInterview(resumeId);
+      const response = await createInterview({
+        resumeId,
+        jobTitle: jobTitle.trim(),
+        jobDescription: jobDescription.trim(),
+      });
 
-      console.log("INTERVIEW RESPONSE:", response.data);
-
-      setQuestions(response.data.session.questions);
-
-      loadInterviewHistory();
+      navigate(`/interviews/${response.data.session.id}`);
     } catch (error) {
-      console.error("GENERATE INTERVIEW ERROR:", error);
+      console.error("START INTERVIEW ERROR:", error);
 
-      alert(
-        error.response?.data?.message ||
-          "Failed to generate interview."
+      setStartError(
+        error.response?.data?.message || "Failed to start the interview."
       );
     } finally {
-      setIsGenerating(false);
+      setIsStarting(false);
     }
   }
 
@@ -175,13 +176,16 @@ function Dashboard() {
             onFileChange={handleFileChange}
           />
 
-          <AIQuestionCard
-            questions={questions}
-            isGenerating={isGenerating}
-            onGenerateInterview={handleGenerateInterview}
+          <StartInterviewCard
+            hasResume={Boolean(resumeId)}
+            jobTitle={jobTitle}
+            jobDescription={jobDescription}
+            onJobTitleChange={setJobTitle}
+            onJobDescriptionChange={setJobDescription}
+            onStart={handleStartInterview}
+            isStarting={isStarting}
+            error={startError}
           />
-
-          <MockInterviewCard />
 
           <InterviewHistoryCard
             history={history}

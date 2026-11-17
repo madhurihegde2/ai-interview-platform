@@ -1,21 +1,20 @@
-require("dotenv").config();
+const { config, requireEnv } = require("./config/env");
 
 // Fail fast instead of returning 500s at request time
-const REQUIRED_ENV = ["DATABASE_URL", "JWT_SECRET"];
-const missing = REQUIRED_ENV.filter((name) => !process.env[name]);
-
-if (missing.length > 0) {
-  console.error(
-    `Missing required environment variable(s): ${missing.join(", ")}. ` +
-      "Copy backend/.env.example to backend/.env and fill them in."
-  );
-  process.exit(1);
-}
+requireEnv(["DATABASE_URL", "JWT_SECRET", "OPENROUTER_API_KEY"]);
 
 const app = require("./app");
+const { disconnectProducer } = require("./config/kafka");
 
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const server = app.listen(config.port, () => {
+  console.log(`Server running on port ${config.port}`);
 });
+
+async function shutdown() {
+  server.close();
+  await disconnectProducer();
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

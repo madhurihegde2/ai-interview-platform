@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 model User {
@@ -33,13 +35,19 @@ model Resume {
 }
 
 model InterviewSession {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
+  id             Int       @id @default(autoincrement())
+  jobTitle       String?
+  jobDescription String?   @db.Text
+  // IN_PROGRESS | COMPLETED
+  status         String    @default("IN_PROGRESS")
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
 
   resumeId Int
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   questions InterviewQuestion[]
+  chunks    DocumentChunk[]
 }
 
 model InterviewQuestion {
@@ -47,8 +55,48 @@ model InterviewQuestion {
   question   String   @db.Text
   category   String
   difficulty String?
+  // Order of the main questions; a follow-up shares its parent's position
+  position   Int      @default(0)
+  isFollowUp Boolean  @default(false)
   createdAt  DateTime @default(now())
 
   sessionId Int
   session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  parentId  Int?
+  parent    InterviewQuestion?  @relation("FollowUps", fields: [parentId], references: [id], onDelete: Cascade)
+  followUps InterviewQuestion[] @relation("FollowUps")
+
+  answer Answer?
+}
+
+model Answer {
+  id           Int       @id @default(autoincrement())
+  text         String    @db.Text
+  // PENDING | SCORED | FAILED (scored asynchronously by the Kafka worker)
+  status       String    @default("PENDING")
+  score        Int?
+  feedback     String?   @db.Text
+  strengths    Json?
+  improvements Json?
+  createdAt    DateTime  @default(now())
+  evaluatedAt  DateTime?
+
+  questionId Int               @unique
+  question   InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// Resume / job-description chunks embedded for retrieval (RAG)
+model DocumentChunk {
+  id        Int                          @id @default(autoincrement())
+  // RESUME | JOB_DESCRIPTION
+  source    String
+  content   String                       @db.Text
+  embedding Unsupported("vector(1536)")?
+  createdAt DateTime                     @default(now())
+
+  sessionId Int
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
 }
