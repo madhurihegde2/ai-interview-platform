@@ -1,225 +1,209 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-import Navbar from "../components/Navbar";
-import ResumeCard from "../components/ResumeCard";
-import StartInterviewCard from "../components/StartInterviewCard";
-import InterviewHistoryCard from "../components/InterviewHistoryCard";
-
-import { uploadResume, getLatestResume } from "../api/resumeApi";
-import { clearSession } from "../api/client";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  createInterview,
-  getInterviewHistory,
-  getInterviewOptions,
-} from "../api/interviewApi";
+  ArrowRight,
+  Award,
+  ClipboardList,
+  MessageSquareText,
+  PlusCircle,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
+
+import Card, { CardHeader } from "../components/ui/Card";
+import { ButtonLink } from "../components/ui/Button";
+import { EmptyState, Skeleton } from "../components/ui/Feedback";
+import StatCard from "../components/StatCard";
+import InterviewList from "../components/InterviewList";
+import ResumeUploader from "../components/ResumeUploader";
+import { getLatestResume } from "../api/resumeApi";
+import { getInterviewHistory } from "../api/interviewApi";
+import { MODE_META } from "../utils/interviewLabels";
+import { getStoredUser } from "../utils/session";
+
+function computeStats(sessions) {
+  const scoredAnswers = sessions.flatMap((session) =>
+    session.questions
+      .map((question) => question.answer)
+      .filter((answer) => answer?.status === "SCORED")
+  );
+
+  const averageScore = scoredAnswers.length
+    ? Math.round(
+        (scoredAnswers.reduce((sum, answer) => sum + answer.score, 0) /
+          scoredAnswers.length) *
+          10
+      ) / 10
+    : null;
+
+  // Best track = highest average score among tracks with scored answers
+  const byMode = {};
+  for (const session of sessions) {
+    for (const question of session.questions) {
+      if (question.answer?.status !== "SCORED") continue;
+      byMode[session.mode] ??= { total: 0, count: 0 };
+      byMode[session.mode].total += question.answer.score;
+      byMode[session.mode].count += 1;
+    }
+  }
+
+  const bestMode = Object.entries(byMode)
+    .map(([mode, { total, count }]) => ({ mode, average: total / count }))
+    .sort((a, b) => b.average - a.average)[0];
+
+  return {
+    total: sessions.length,
+    completed: sessions.filter((s) => s.status === "COMPLETED").length,
+    answered: sessions.reduce((sum, s) => sum + s.summary.answered, 0),
+    averageScore,
+    bestMode,
+  };
+}
 
 function Dashboard() {
-  const navigate = useNavigate();
-  const fileInputRef = useRef(null);
+  const user = getStoredUser();
+  const firstName = user?.fullName?.split(" ")[0] || "there";
 
-  const storedUser = localStorage.getItem("user");
-  const user = storedUser ? JSON.parse(storedUser) : null;
-
-  const [uploadMessage, setUploadMessage] = useState("");
-  const [uploadError, setUploadError] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const [resumeId, setResumeId] = useState(null);
-
-  const [interviewOptions, setInterviewOptions] = useState(null);
-  const [interviewForm, setInterviewForm] = useState({
-    mode: "",
-    difficulty: "",
-    jobTitle: "",
-    jobDescription: "",
-  });
-  const [isStarting, setIsStarting] = useState(false);
-  const [startError, setStartError] = useState("");
-
-  const [history, setHistory] = useState([]);
-
-  function handleLogout() {
-    clearSession();
-
-    navigate("/");
-  }
-
-  function handleUploadButtonClick() {
-    fileInputRef.current?.click();
-  }
-
-  async function handleFileChange(event) {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    if (file.type !== "application/pdf") {
-      setUploadError("Please select a PDF file.");
-      event.target.value = "";
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      setUploadError("");
-      setUploadMessage("");
-
-      const response = await uploadResume(file);
-
-      setUploadMessage(response.data.message);
-      setUploadedFileName(response.data.resume.originalName);
-      setResumeId(response.data.resume.id);
-    } catch (error) {
-      console.error("UPLOAD ERROR:", error);
-
-      setUploadError(
-        error.response?.data?.message ||
-          "Resume upload failed. Please try again."
-      );
-    } finally {
-      setIsUploading(false);
-
-      event.target.value = "";
-    }
-  }
-
-  async function handleStartInterview() {
-    if (!resumeId) {
-      setStartError("Please upload a resume first.");
-      return;
-    }
-
-    try {
-      setIsStarting(true);
-      setStartError("");
-
-      const response = await createInterview({
-        resumeId,
-        mode: interviewForm.mode,
-        difficulty: interviewForm.difficulty,
-        jobTitle: interviewForm.jobTitle.trim(),
-        jobDescription: interviewForm.jobDescription.trim(),
-      });
-
-      navigate(`/interviews/${response.data.session.id}`);
-    } catch (error) {
-      console.error("START INTERVIEW ERROR:", error);
-
-      setStartError(
-        error.response?.data?.message || "Failed to start the interview."
-      );
-    } finally {
-      setIsStarting(false);
-    }
-  }
-
-  async function loadInterviewHistory() {
-    try {
-      const response = await getInterviewHistory();
-
-      setHistory(response.data.sessions);
-    } catch (error) {
-      console.error("HISTORY ERROR:", error);
-    }
-  }
-
-  async function loadLatestResume() {
-    try {
-      const response = await getLatestResume();
-      const resume = response.data.resume;
-
-      if (resume) {
-        setResumeId(resume.id);
-        setUploadedFileName(resume.originalName);
-      }
-    } catch (error) {
-      console.error("LOAD RESUME ERROR:", error);
-    }
-  }
-
-  async function loadInterviewOptions() {
-    try {
-      const response = await getInterviewOptions();
-
-      setInterviewOptions(response.data);
-      setInterviewForm((form) => ({
-        ...form,
-        mode: form.mode || response.data.defaults.mode,
-        difficulty: form.difficulty || response.data.defaults.difficulty,
-      }));
-    } catch (error) {
-      console.error("OPTIONS ERROR:", error);
-      setStartError("Could not load interview options. Please refresh.");
-    }
-  }
+  const [resume, setResume] = useState(null);
+  const [sessions, setSessions] = useState(null);
 
   useEffect(() => {
-    loadInterviewOptions();
-    loadLatestResume();
-    loadInterviewHistory();
+    getLatestResume()
+      .then((response) => setResume(response.data.resume))
+      .catch((error) => console.error("LOAD RESUME ERROR:", error));
+
+    getInterviewHistory()
+      .then((response) => setSessions(response.data.sessions))
+      .catch((error) => {
+        console.error("HISTORY ERROR:", error);
+        setSessions([]);
+      });
   }, []);
 
+  const stats = useMemo(() => (sessions ? computeStats(sessions) : null), [sessions]);
+  const inProgress = sessions?.find((s) => s.status === "IN_PROGRESS");
+
   return (
-    <>
-      <Navbar />
+    <div className="space-y-8 animate-slide-up">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Welcome back, {firstName} 👋
+          </h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
+            Ready to practice for your next interview?
+          </p>
+        </div>
+        <ButtonLink to="/interviews/new" size="lg" icon={PlusCircle}>
+          New interview
+        </ButtonLink>
+      </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-4xl font-bold">
-              Welcome, {user?.fullName || "User"} 👋
-            </h1>
-
-            <p className="text-gray-500 mt-2">
-              Ready to practice for your next interview?
+      {inProgress && (
+        <Link
+          to={`/interviews/${inProgress.id}`}
+          className="group flex items-center gap-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 p-5 text-white shadow-lg shadow-indigo-500/20 transition hover:shadow-xl"
+        >
+          <Sparkles className="h-6 w-6 shrink-0" aria-hidden="true" />
+          <div className="flex-1">
+            <p className="font-semibold">You have an interview in progress</p>
+            <p className="text-sm text-indigo-100">
+              {inProgress.jobTitle} · {inProgress.summary.answered} answered so far
             </p>
           </div>
+          <span className="flex items-center gap-1 text-sm font-semibold">
+            Continue
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" />
+          </span>
+        </Link>
+      )}
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="border border-red-500 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50"
-          >
-            Logout
-          </button>
-        </div>
+      <section aria-label="Your stats" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {!stats ? (
+          Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
+        ) : (
+          <>
+            <StatCard
+              icon={ClipboardList}
+              label="Interviews"
+              value={stats.total}
+              hint={`${stats.completed} completed`}
+            />
+            <StatCard
+              icon={MessageSquareText}
+              label="Answers given"
+              value={stats.answered}
+              hint="Across all interviews"
+              accent="from-sky-500 to-cyan-500"
+            />
+            <StatCard
+              icon={Award}
+              label="Average score"
+              value={stats.averageScore !== null ? `${stats.averageScore}/10` : "–"}
+              hint={stats.averageScore !== null ? "All scored answers" : "Answer a question to see it"}
+              accent="from-emerald-500 to-teal-500"
+            />
+            <StatCard
+              icon={Trophy}
+              label="Strongest track"
+              value={stats.bestMode ? MODE_META[stats.bestMode.mode]?.label.split(" ")[0] : "–"}
+              hint={
+                stats.bestMode
+                  ? `${MODE_META[stats.bestMode.mode]?.label} · ${stats.bestMode.average.toFixed(1)}/10`
+                  : "Not enough data yet"
+              }
+              accent="from-amber-500 to-orange-500"
+            />
+          </>
+        )}
+      </section>
 
-        {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-
-          <ResumeCard
-            isUploading={isUploading}
-            uploadMessage={uploadMessage}
-            uploadError={uploadError}
-            uploadedFileName={uploadedFileName}
-            onUploadClick={handleUploadButtonClick}
-            fileInputRef={fileInputRef}
-            onFileChange={handleFileChange}
-          />
-
-          <StartInterviewCard
-            options={interviewOptions}
-            hasResume={Boolean(resumeId)}
-            form={interviewForm}
-            onChange={(changes) =>
-              setInterviewForm((form) => ({ ...form, ...changes }))
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader
+            title="Recent interviews"
+            description="Pick up where you left off or review feedback."
+            action={
+              sessions?.length > 0 && (
+                <Link to="/history" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                  View all
+                </Link>
+              )
             }
-            onStart={handleStartInterview}
-            isStarting={isStarting}
-            error={startError}
           />
+          <div className="mt-4 pb-2">
+            {!sessions ? (
+              <div className="space-y-3 px-6 pb-4">
+                {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-16" />)}
+              </div>
+            ) : sessions.length === 0 ? (
+              <EmptyState
+                icon={ClipboardList}
+                title="No interviews yet"
+                description="Start your first mock interview to see your progress here."
+                action={
+                  <ButtonLink to="/interviews/new" icon={PlusCircle}>
+                    Start an interview
+                  </ButtonLink>
+                }
+              />
+            ) : (
+              <InterviewList sessions={sessions.slice(0, 5)} />
+            )}
+          </div>
+        </Card>
 
-          <InterviewHistoryCard
-            history={history}
+        <Card>
+          <CardHeader
+            title="Your resume"
+            description="Questions are tailored to this resume."
           />
-
-        </div>
-      </main>
-    </>
+          <div className="p-6">
+            <ResumeUploader resume={resume} onUploaded={setResume} />
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }
 

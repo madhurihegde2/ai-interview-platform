@@ -41,7 +41,9 @@ backend/
     workers/scoringWorker.js  Kafka consumer that scores answers
   prisma/             schema and migrations
 frontend/
-  src/pages/          Login, Register, Dashboard, Interview
+  src/pages/          Login, Register, Dashboard, NewInterview, Interview, History
+  src/components/ui/  Design system: Button, Card, Badge, Input, Modal, ScoreRing...
+  src/layouts/        App shell (sidebar, dark mode) and auth layout
 docker-compose.yml    Postgres + pgvector, Kafka (and the full app with --profile app)
 ```
 

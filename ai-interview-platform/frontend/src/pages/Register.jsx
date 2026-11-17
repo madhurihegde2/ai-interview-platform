@@ -1,13 +1,31 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AlertCircle, UserPlus } from "lucide-react";
 
-import Card from "../components/Card";
-import Button from "../components/Button";
-import InputField from "../components/InputField";
+import Button from "../components/ui/Button";
+import { FieldError, Input, Label } from "../components/ui/Input";
+import PasswordInput from "../components/PasswordInput";
 import { registerUser } from "../api/authApi";
+import { useToast } from "../context/toast";
+
+const MIN_PASSWORD_LENGTH = 8;
+
+function validate({ fullName, email, password, confirmPassword }) {
+  const errors = {};
+
+  if (!fullName.trim()) errors.fullName = "Enter your name.";
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) errors.email = "Enter a valid email address.";
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    errors.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+  }
+  if (confirmPassword !== password) errors.confirmPassword = "Passwords don't match.";
+
+  return errors;
+}
 
 function Register() {
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -15,124 +33,128 @@ function Register() {
     password: "",
     confirmPassword: "",
   });
-
-  const [message, setMessage] = useState("");
+  const [touched, setTouched] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const errors = validate(formData);
+  const showErrors = touched ? errors : {};
+
   function handleChange(event) {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
+    setFormData({ ...formData, [event.target.name]: event.target.value });
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-
-    setMessage("");
+    setTouched(true);
     setError("");
 
-    if (
-      !formData.fullName ||
-      !formData.email ||
-      !formData.password ||
-      !formData.confirmPassword
-    ) {
-      setError("All fields are required.");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (Object.keys(errors).length > 0) return;
 
     try {
       setIsLoading(true);
 
-      const response = await registerUser({
-        fullName: formData.fullName,
-        email: formData.email,
+      await registerUser({
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
         password: formData.password,
       });
 
-      setMessage(response.data.message);
-
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
+      toast.success("Account created. Log in to get started.");
+      navigate("/");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Registration failed. Please try again."
-      );
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center">
-      <Card>
-        <h1 className="text-4xl font-bold text-center text-blue-600">
-          Create Account
-        </h1>
+    <>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Create your account
+      </h1>
+      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        Start practicing interviews in minutes.
+      </p>
 
-        <form onSubmit={handleSubmit}>
-          <InputField
-            label="Full Name"
-            type="text"
-            placeholder="Enter your name"
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+        <div>
+          <Label htmlFor="fullName">Full name</Label>
+          <Input
+            id="fullName"
             name="fullName"
+            autoComplete="name"
+            placeholder="Jane Doe"
             value={formData.fullName}
             onChange={handleChange}
+            invalid={Boolean(showErrors.fullName)}
           />
+          <FieldError>{showErrors.fullName}</FieldError>
+        </div>
 
-          <InputField
-            label="Email"
-            type="email"
-            placeholder="Enter your email"
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
             name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
             value={formData.email}
             onChange={handleChange}
+            invalid={Boolean(showErrors.email)}
           />
+          <FieldError>{showErrors.email}</FieldError>
+        </div>
 
-          <InputField
-            label="Password"
-            type="password"
-            placeholder="Enter password"
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
             name="password"
+            autoComplete="new-password"
+            placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
             value={formData.password}
             onChange={handleChange}
+            invalid={Boolean(showErrors.password)}
           />
+          <FieldError>{showErrors.password}</FieldError>
+        </div>
 
-          <InputField
-            label="Confirm Password"
-            type="password"
-            placeholder="Confirm password"
+        <div>
+          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <PasswordInput
+            id="confirmPassword"
             name="confirmPassword"
+            autoComplete="new-password"
+            placeholder="Repeat your password"
             value={formData.confirmPassword}
             onChange={handleChange}
+            invalid={Boolean(showErrors.confirmPassword)}
           />
+          <FieldError>{showErrors.confirmPassword}</FieldError>
+        </div>
 
-          {error && (
-            <p className="mt-4 text-sm text-red-600">{error}</p>
-          )}
-
-          {message && (
-            <p className="mt-4 text-sm text-green-600">{message}</p>
-          )}
-
-          <div className="mt-6">
-            <Button
-              text={isLoading ? "Registering..." : "Register"}
-              disabled={isLoading}
-            />
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300" role="alert">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {error}
           </div>
-        </form>
-      </Card>
-    </div>
+        )}
+
+        <Button type="submit" size="lg" className="w-full" loading={isLoading} icon={UserPlus}>
+          {isLoading ? "Creating account..." : "Create account"}
+        </Button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        Already have an account?{" "}
+        <Link to="/" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+          Log in
+        </Link>
+      </p>
+    </>
   );
 }
 
