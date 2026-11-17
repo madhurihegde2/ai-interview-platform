@@ -2,6 +2,13 @@ const prisma = require("../config/prisma");
 const { config } = require("../config/env");
 const { TOPICS, publishEvent } = require("../config/kafka");
 const {
+  INTERVIEW_MODES,
+  DIFFICULTY_LEVELS,
+  DEFAULT_MODE,
+  DEFAULT_DIFFICULTY,
+  getInterviewOptions,
+} = require("../config/interviewModes");
+const {
   generateInterviewQuestions,
   generateFollowUp,
 } = require("../services/interviewAI");
@@ -72,22 +79,32 @@ const createInterviewSession = async (req, res) => {
   try {
     const userId = req.user.userId;
     const resumeId = parseId(req.body.resumeId);
-    const jobTitle = String(req.body.jobTitle || "").trim();
+    const mode = req.body.mode || DEFAULT_MODE;
+    const difficulty = req.body.difficulty || DEFAULT_DIFFICULTY;
     const jobDescription = String(req.body.jobDescription || "").trim();
 
     if (!resumeId) {
       return res.status(400).json({ message: "resumeId is required." });
     }
 
-    if (!jobTitle) {
-      return res.status(400).json({ message: "Job title is required." });
+    if (!INTERVIEW_MODES[mode]) {
+      return res.status(400).json({ message: "Invalid interview mode." });
     }
 
-    if (jobDescription.length < 50) {
+    if (!DIFFICULTY_LEVELS[difficulty]) {
+      return res.status(400).json({ message: "Invalid difficulty level." });
+    }
+
+    // The job description is optional, but if given it must be meaningful
+    if (jobDescription && jobDescription.length < 50) {
       return res.status(400).json({
-        message: "Please paste the job description (at least 50 characters).",
+        message:
+          "The job description is too short. Paste the full posting (at least 50 characters) or leave it empty.",
       });
     }
+
+    const jobTitle =
+      String(req.body.jobTitle || "").trim() || INTERVIEW_MODES[mode].label;
 
     const resume = await prisma.resume.findFirst({
       where: { id: resumeId, userId },
@@ -108,6 +125,8 @@ const createInterviewSession = async (req, res) => {
       resumeText: resume.resumeText,
       jobTitle,
       jobDescription,
+      mode,
+      difficulty,
       count: config.interview.mainQuestionCount,
     });
 
@@ -115,7 +134,9 @@ const createInterviewSession = async (req, res) => {
       data: {
         resumeId: resume.id,
         jobTitle,
-        jobDescription,
+        jobDescription: jobDescription || null,
+        mode,
+        difficulty,
         questions: {
           create: questions.map((q, i) => ({ ...q, position: i + 1 })),
         },
@@ -147,6 +168,10 @@ const createInterviewSession = async (req, res) => {
         "Could not generate the interview right now. Please try again in a moment.",
     });
   }
+};
+
+const getOptions = (req, res) => {
+  return res.status(200).json(getInterviewOptions());
 };
 
 const getInterviewHistory = async (req, res) => {
@@ -263,6 +288,8 @@ const submitAnswer = async (req, res) => {
 
         const followUp = await generateFollowUp({
           jobTitle: session.jobTitle || "the target role",
+          mode: session.mode,
+          difficulty: session.difficulty,
           question: current.question,
           answer: text,
           context: formatChunks(chunks),
@@ -348,6 +375,7 @@ const completeInterview = async (req, res) => {
 };
 
 module.exports = {
+  getOptions,
   createInterviewSession,
   getInterviewHistory,
   getInterviewById,

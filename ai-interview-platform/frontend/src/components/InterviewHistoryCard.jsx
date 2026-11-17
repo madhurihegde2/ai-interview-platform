@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 
+import { MODE_LABELS, DIFFICULTY_LABELS } from "../utils/interviewLabels";
+
 function InterviewHistoryCard({ history }) {
   return (
     <div className="bg-white rounded-xl shadow p-6">
@@ -32,6 +34,8 @@ function InterviewHistoryCard({ history }) {
               </div>
 
               <p className="text-sm text-gray-500 mt-1">
+                {MODE_LABELS[session.mode]} •{" "}
+                {DIFFICULTY_LABELS[session.difficulty]} •{" "}
                 {new Date(session.createdAt).toLocaleDateString()} •{" "}
                 {session.summary.answered} answered
                 {session.summary.averageScore !== null &&

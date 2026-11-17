@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import AnswerEvaluation from "../components/AnswerEvaluation";
+import { MODE_LABELS, DIFFICULTY_LABELS } from "../utils/interviewLabels";
 
 import {
   getInterview,
@@ -141,9 +142,17 @@ function Interview() {
             <h1 className="text-3xl font-bold">
               {session.jobTitle || `Interview #${session.id}`}
             </h1>
-            <p className="text-gray-500 mt-1">
-              Resume: {session.resume.originalName}
-            </p>
+            <div className="flex flex-wrap gap-2 mt-2 text-sm">
+              <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                {MODE_LABELS[session.mode] || session.mode}
+              </span>
+              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                {DIFFICULTY_LABELS[session.difficulty] || session.difficulty}
+              </span>
+              <span className="text-gray-500">
+                Resume: {session.resume.originalName}
+              </span>
+            </div>
           </div>
 
           {session.status === "IN_PROGRESS" && (

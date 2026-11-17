@@ -11,6 +11,7 @@ import { clearSession } from "../api/client";
 import {
   createInterview,
   getInterviewHistory,
+  getInterviewOptions,
 } from "../api/interviewApi";
 
 function Dashboard() {
@@ -26,8 +27,13 @@ function Dashboard() {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [resumeId, setResumeId] = useState(null);
 
-  const [jobTitle, setJobTitle] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
+  const [interviewOptions, setInterviewOptions] = useState(null);
+  const [interviewForm, setInterviewForm] = useState({
+    mode: "",
+    difficulty: "",
+    jobTitle: "",
+    jobDescription: "",
+  });
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState("");
 
@@ -92,8 +98,10 @@ function Dashboard() {
 
       const response = await createInterview({
         resumeId,
-        jobTitle: jobTitle.trim(),
-        jobDescription: jobDescription.trim(),
+        mode: interviewForm.mode,
+        difficulty: interviewForm.difficulty,
+        jobTitle: interviewForm.jobTitle.trim(),
+        jobDescription: interviewForm.jobDescription.trim(),
       });
 
       navigate(`/interviews/${response.data.session.id}`);
@@ -132,7 +140,24 @@ function Dashboard() {
     }
   }
 
+  async function loadInterviewOptions() {
+    try {
+      const response = await getInterviewOptions();
+
+      setInterviewOptions(response.data);
+      setInterviewForm((form) => ({
+        ...form,
+        mode: form.mode || response.data.defaults.mode,
+        difficulty: form.difficulty || response.data.defaults.difficulty,
+      }));
+    } catch (error) {
+      console.error("OPTIONS ERROR:", error);
+      setStartError("Could not load interview options. Please refresh.");
+    }
+  }
+
   useEffect(() => {
+    loadInterviewOptions();
     loadLatestResume();
     loadInterviewHistory();
   }, []);
@@ -177,11 +202,12 @@ function Dashboard() {
           />
 
           <StartInterviewCard
+            options={interviewOptions}
             hasResume={Boolean(resumeId)}
-            jobTitle={jobTitle}
-            jobDescription={jobDescription}
-            onJobTitleChange={setJobTitle}
-            onJobDescriptionChange={setJobDescription}
+            form={interviewForm}
+            onChange={(changes) =>
+              setInterviewForm((form) => ({ ...form, ...changes }))
+            }
             onStart={handleStartInterview}
             isStarting={isStarting}
             error={startError}

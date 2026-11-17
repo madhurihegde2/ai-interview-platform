@@ -12,7 +12,7 @@ const CHUNK_OVERLAP = 150;
  * Split text into overlapping chunks, preferring paragraph/line boundaries.
  */
 function chunkText(text, size = CHUNK_SIZE, overlap = CHUNK_OVERLAP) {
-  const normalized = text.replace(/\r/g, "").replace(/[ \t]+/g, " ").trim();
+  const normalized = String(text || "").replace(/\r/g, "").replace(/[ \t]+/g, " ").trim();
 
   if (!normalized) {
     return [];

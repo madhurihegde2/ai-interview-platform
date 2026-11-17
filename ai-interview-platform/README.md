@@ -2,6 +2,8 @@
 
 Generates role-specific interview questions from your resume and a job description, then runs an interactive mock interview with real-time answer scoring and tailored follow-up questions.
 
+**Interview modes:** Data Engineer, Backend Engineer, Full-Stack Engineer and Software Engineer, each with Easy, Medium or Hard difficulty. The job description is optional; without one, questions follow the mode's focus areas.
+
 **Stack:** React · Node.js · Express · PostgreSQL · pgvector · Kafka · Docker · OpenRouter
 
 ## How it works
@@ -112,7 +114,8 @@ Frontend: `VITE_API_URL` (default `http://localhost:3001/api`).
 | `GET` | `/api/users/profile` | Current user |
 | `POST` | `/api/resumes/upload` | Upload a PDF resume |
 | `GET` | `/api/resumes/latest` | Most recent resume |
-| `POST` | `/api/interviews` | Start an interview (`resumeId`, `jobTitle`, `jobDescription`) |
+| `GET` | `/api/interviews/options` | Available interview modes and difficulty levels |
+| `POST` | `/api/interviews` | Start an interview (`resumeId`, `mode`, `difficulty`, optional `jobTitle` and `jobDescription`) |
 | `GET` | `/api/interviews` | Interview history |
 | `GET` | `/api/interviews/:id` | One interview with questions, answers and scores |
 | `POST` | `/api/interviews/:id/questions/:questionId/answer` | Submit an answer |

@@ -38,6 +38,10 @@ model InterviewSession {
   id             Int       @id @default(autoincrement())
   jobTitle       String?
   jobDescription String?   @db.Text
+  // DATA_ENGINEER | BACKEND_ENGINEER | FULL_STACK_ENGINEER | SOFTWARE_ENGINEER
+  mode           String    @default("SOFTWARE_ENGINEER")
+  // EASY | MEDIUM | HARD
+  difficulty     String    @default("MEDIUM")
   // IN_PROGRESS | COMPLETED
   status         String    @default("IN_PROGRESS")
   createdAt      DateTime  @default(now())
