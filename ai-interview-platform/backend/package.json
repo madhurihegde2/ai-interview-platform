@@ -7,7 +7,8 @@
     "dev": "nodemon src/server.js",
     "dev:worker": "nodemon src/workers/scoringWorker.js",
     "start": "node src/server.js",
-    "worker": "node src/workers/scoringWorker.js"
+    "worker": "node src/workers/scoringWorker.js",
+    "reembed": "node src/scripts/reembedChunks.js"
   },
   "keywords": [],
   "author": "",

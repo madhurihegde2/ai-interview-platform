@@ -23,9 +23,16 @@ const config = {
   openRouter: {
     apiKey: process.env.OPENROUTER_API_KEY,
     baseUrl: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
-    chatModel: process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini",
+    // Comma-separated: the first model is used, the rest are fallbacks
+    chatModels: (
+      process.env.OPENROUTER_MODEL ||
+      "particle-ai/particle-1:free,nvidia/nemotron-3.5-super-vl:free,openrouter/free"
+    )
+      .split(",")
+      .map((model) => model.trim())
+      .filter(Boolean),
     embeddingModel:
-      process.env.EMBEDDING_MODEL || "openai/text-embedding-3-small",
+      process.env.EMBEDDING_MODEL || "nvidia/nemotron-3.5-embed-1b:free",
   },
 
   // Must match the vector(N) column in prisma/schema.prisma
