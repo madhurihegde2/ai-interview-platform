@@ -2,9 +2,24 @@ const bcrypt = require("bcrypt");
 const prisma = require("../config/prisma");
 const jwt = require("jsonwebtoken");
 
+// Emails are stored lowercased so "A@x.com" and "a@x.com" are the same account
+const normalizeEmail = (email) => String(email).trim().toLowerCase();
+
+// Case-insensitive lookup so accounts created before normalization still match
+const findUserByEmail = (email) =>
+  prisma.user.findFirst({
+    where: {
+      email: {
+        equals: email,
+        mode: "insensitive",
+      },
+    },
+  });
+
 const registerUser = async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, password } = req.body;
+    const email = req.body.email ? normalizeEmail(req.body.email) : "";
 
     // Validation
     if (!fullName || !email || !password) {
@@ -14,9 +29,7 @@ const registerUser = async (req, res) => {
     }
 
     // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
       return res.status(400).json({
@@ -59,7 +72,8 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email ? normalizeEmail(req.body.email) : "";
 
     if (!email || !password) {
       return res.status(400).json({
@@ -67,9 +81,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await findUserByEmail(email);
 
     if (!user) {
       return res.status(401).json({
