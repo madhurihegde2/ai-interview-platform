@@ -102,6 +102,15 @@ async function retrieveRelevantChunks(sessionId, query, limit = 4) {
   `;
 }
 
+async function getChunksByIds(sessionId, ids) {
+  if (!ids?.length) return [];
+
+  return prisma.documentChunk.findMany({
+    where: { sessionId, id: { in: ids } },
+    select: { id: true, source: true, content: true },
+  });
+}
+
 function formatChunks(chunks) {
   return chunks
     .map(
@@ -115,5 +124,6 @@ module.exports = {
   chunkText,
   indexSessionDocuments,
   retrieveRelevantChunks,
+  getChunksByIds,
   formatChunks,
 };

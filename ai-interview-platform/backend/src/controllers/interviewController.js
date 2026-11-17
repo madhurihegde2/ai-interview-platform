@@ -257,12 +257,26 @@ const submitAnswer = async (req, res) => {
       data: { text, questionId: current.id },
     });
 
+    // Retrieve resume/JD context once; the follow-up and the Kafka scoring
+    // worker both reuse it, saving an embedding request per answer
+    let chunks = [];
+
+    try {
+      chunks = await retrieveRelevantChunks(
+        session.id,
+        `${current.question}\n${text}`
+      );
+    } catch (retrievalError) {
+      console.error("RETRIEVAL ERROR:", retrievalError.message);
+    }
+
     // Hand scoring to the Kafka worker so the interview never waits on it
     try {
       await publishEvent(TOPICS.ANSWER_SUBMITTED, session.id, {
         answerId: answer.id,
         questionId: current.id,
         sessionId: session.id,
+        contextChunkIds: chunks.map((chunk) => chunk.id),
         submittedAt: answer.createdAt,
       });
     } catch (publishError) {
@@ -281,11 +295,6 @@ const submitAnswer = async (req, res) => {
     // One tailored follow-up per main question, grounded in retrieved context
     if (!current.isFollowUp) {
       try {
-        const chunks = await retrieveRelevantChunks(
-          session.id,
-          `${current.question}\n${text}`
-        );
-
         const followUp = await generateFollowUp({
           jobTitle: session.jobTitle || "the target role",
           mode: session.mode,

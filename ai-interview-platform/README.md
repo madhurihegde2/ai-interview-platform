@@ -4,7 +4,7 @@ Generates role-specific interview questions from your resume and a job descripti
 
 **Interview modes:** Data Engineer, Backend Engineer, Full-Stack Engineer and Software Engineer, each with Easy, Medium or Hard difficulty. The job description is optional; without one, questions follow the mode's focus areas.
 
-**Stack:** React · Node.js · Express · PostgreSQL · pgvector · Kafka · Docker · OpenRouter
+**Stack:** React · Node.js · Express · PostgreSQL · pgvector · Kafka · Docker · OpenRouter (free models by default)
 
 ## How it works
 
@@ -99,13 +99,17 @@ The app is then at http://localhost:8080 (API on port 3001). The backend contain
 | `DATABASE_URL` | Postgres connection string | — (required) |
 | `JWT_SECRET` | Signs login tokens | — (required) |
 | `OPENROUTER_API_KEY` | OpenRouter API key | — (required) |
-| `OPENROUTER_MODEL` | Chat model for questions, follow-ups and scoring | `openai/gpt-4.1-mini` |
-| `EMBEDDING_MODEL` | Embedding model; must output 1536 dimensions | `openai/text-embedding-3-small` |
+| `OPENROUTER_MODEL` | Chat model(s) for questions, follow-ups and scoring; comma-separated, the rest are fallbacks | `particle-ai/particle-1:free,nvidia/nemotron-3.5-super-vl:free,openrouter/free` |
+| `EMBEDDING_MODEL` | Embedding model; must support 1536-dimension output. Run `npm run reembed` after changing it | `nvidia/nemotron-3.5-embed-1b:free` |
 | `KAFKA_BROKERS` | Comma-separated Kafka brokers | `localhost:9092` |
 | `CORS_ORIGIN` | Allowed frontend origin(s) | `http://localhost:5173` |
 | `INTERVIEW_QUESTION_COUNT` | Main questions per interview | `5` |
 
 Frontend: `VITE_API_URL` (default `http://localhost:3001/api`).
+
+### Free models
+
+The defaults are OpenRouter `:free` models, so the app costs nothing to run. OpenRouter limits free models to **20 requests/minute and 50 requests/day**, rising to 1,000/day once the account has purchased at least $10 of credits. One full interview uses roughly 25 requests. Free models can be slow or busy, so calls are retried automatically and fall back through the model list. To use a paid model instead, set `OPENROUTER_MODEL` (e.g. `openai/gpt-4.1-mini`).
 
 ## API
 

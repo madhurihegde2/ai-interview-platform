@@ -9,12 +9,13 @@ const { kafka, TOPICS, ensureTopics } = require("../config/kafka");
 const { evaluateAnswer } = require("../services/interviewAI");
 const {
   retrieveRelevantChunks,
+  getChunksByIds,
   formatChunks,
 } = require("../services/ragService");
 
 const consumer = kafka.consumer({ groupId: "answer-scoring" });
 
-async function scoreAnswer(answerId) {
+async function scoreAnswer(answerId, contextChunkIds) {
   const answer = await prisma.answer.findUnique({
     where: { id: answerId },
     include: {
@@ -38,10 +39,15 @@ async function scoreAnswer(answerId) {
   const { session } = question;
 
   try {
-    const chunks = await retrieveRelevantChunks(
-      session.id,
-      `${question.question}\n${answer.text}`
-    );
+    // Reuse the context the API already retrieved; retrieve only if missing
+    let chunks = await getChunksByIds(session.id, contextChunkIds);
+
+    if (chunks.length === 0) {
+      chunks = await retrieveRelevantChunks(
+        session.id,
+        `${question.question}\n${answer.text}`
+      );
+    }
 
     const evaluation = await evaluateAnswer({
       jobTitle: session.jobTitle || "the target role",
@@ -95,9 +101,14 @@ async function start() {
     partitionsConsumedConcurrently: 3,
     eachMessage: async ({ message }) => {
       let answerId;
+      let contextChunkIds = [];
 
       try {
-        answerId = Number(JSON.parse(message.value.toString()).answerId);
+        const event = JSON.parse(message.value.toString());
+        answerId = Number(event.answerId);
+        contextChunkIds = Array.isArray(event.contextChunkIds)
+          ? event.contextChunkIds.map(Number).filter(Number.isInteger)
+          : [];
       } catch {
         answerId = NaN;
       }
@@ -108,7 +119,7 @@ async function start() {
         return;
       }
 
-      await scoreAnswer(answerId);
+      await scoreAnswer(answerId, contextChunkIds);
     },
   });
 

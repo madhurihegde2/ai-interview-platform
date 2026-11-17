@@ -1,5 +1,5 @@
 const { config } = require("../config/env");
-const { openRouterRequest } = require("./llmService");
+const { openRouterRequest, withRetry } = require("./llmService");
 
 /**
  * Embed a list of texts. Returns one vector per input, in order.
@@ -9,11 +9,13 @@ async function embedTexts(texts) {
     return [];
   }
 
-  const data = await openRouterRequest("/embeddings", {
-    model: config.openRouter.embeddingModel,
-    input: texts,
-    dimensions: config.embeddingDimensions,
-  });
+  const data = await withRetry(() =>
+    openRouterRequest("/embeddings", {
+      model: config.openRouter.embeddingModel,
+      input: texts,
+      dimensions: config.embeddingDimensions,
+    })
+  );
 
   const vectors = [...data.data]
     .sort((a, b) => a.index - b.index)
